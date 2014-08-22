@@ -21,7 +21,28 @@ classdef file < handle
         function obj = file(file_path)
             %
             %   neuroshare.file(file_path)
-            %
+            
+            persistent p_file_extension
+            
+            if nargin == 0
+               %TODO: We could eventually have an enumeration of supported
+               %file types ...
+               [file_name,path_name] = uigetfile({'*.*','All Files (*.*)'},'Pick a file to open'); 
+               
+               %TODO: We should move this to a function readFile so that we
+               %don't have to return a useless object
+               if isnumeric(file_name)
+                   return
+               end
+               file_path = fullfile(path_name,file_name);
+            end
+            
+            [~,~,file_extension] = fileparts(file_path);
+            
+            if ~strcmp(file_extension,p_file_extension)
+               neuroshare.autoLoadLibrary(file_path);
+               p_file_extension = file_extension;
+            end
             
             [result_code, obj.h] = ns_OpenFile(file_path);
             
@@ -50,6 +71,7 @@ classdef file < handle
                 file_info.Time_Sec + file_info.Time_MilliSec/1000);
             obj.file_datestr = datestr(obj.file_datenum);
             
+            keyboard
             %JAH: At this point ...
             
         end
