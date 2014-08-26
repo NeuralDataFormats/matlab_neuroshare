@@ -2,8 +2,8 @@ function setLibrary(dll_path)
 %
 %   neuroshare.setLibrary(dll_path)
 %
-
-%TODO: Move the neuroshare class as a static method
+%   I wanted to move this to being static for neuroshare but then
+%   I can't access the private directory :/
 
 result_code = ns_SetLibrary(dll_path);
 

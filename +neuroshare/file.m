@@ -15,6 +15,7 @@ classdef file < handle
         file_datestr
         file_type
         file_duration % (seconds)
+        entity_info %Class: neuroshare.entity_info
     end
     
     methods
@@ -70,6 +71,8 @@ classdef file < handle
                 file_info.Time_Min,...
                 file_info.Time_Sec + file_info.Time_MilliSec/1000);
             obj.file_datestr = datestr(obj.file_datenum);
+            
+            obj.entity_info = neuroshare.entity_info(obj.h,obj.n_entities);
             
             keyboard
             %JAH: At this point ...

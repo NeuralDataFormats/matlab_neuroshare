@@ -4,10 +4,10 @@ classdef neuroshare
     %   neuroshare
     
     properties (Constant)
-       DLLS_64BIT = {
-           'nsCedSon64.dll'}
-       DLLS_32BIT = {
-           'nsCedSon32.dll'}
+        DLLS_64BIT = {
+            'nsCedSon64.dll'}
+        DLLS_32BIT = {
+            'nsCedSon32.dll'}
     end
     
     methods (Static,Hidden)
@@ -16,7 +16,7 @@ classdef neuroshare
             %TODO: Implement this function
             %
             %    ???? - how should we link dlls into the code?
-            %    
+            %
             
             %TODO: This should be in the sl.os package
             is_64_bit = any(strfind(computer,'64'));
