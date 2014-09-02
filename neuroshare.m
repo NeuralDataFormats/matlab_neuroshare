@@ -3,7 +3,7 @@ classdef neuroshare
     %   Class:
     %   neuroshare
     
-    properties (Constant)
+    properties (Constant,Hidden)
         DLLS_64BIT = {
             'nsCedSon64.dll'}
         DLLS_32BIT = {

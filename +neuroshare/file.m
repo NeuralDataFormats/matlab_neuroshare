@@ -16,6 +16,7 @@ classdef file < handle
         file_type
         file_duration % (seconds)
         entity_info %Class: neuroshare.entity_info
+        analog_entities
     end
     
     methods
@@ -24,20 +25,7 @@ classdef file < handle
             %   neuroshare.file(file_path)
             
             persistent p_file_extension
-            
-            if nargin == 0
-               %TODO: We could eventually have an enumeration of supported
-               %file types ...
-               [file_name,path_name] = uigetfile({'*.*','All Files (*.*)'},'Pick a file to open'); 
-               
-               %TODO: We should move this to a function readFile so that we
-               %don't have to return a useless object
-               if isnumeric(file_name)
-                   return
-               end
-               file_path = fullfile(path_name,file_name);
-            end
-            
+
             [~,~,file_extension] = fileparts(file_path);
             
             if ~strcmp(file_extension,p_file_extension)
@@ -55,9 +43,7 @@ classdef file < handle
             
             %TODO: Find definition of FileInfo. What's mandatory and what's
             %optional ???? Current implementation is for the CED dll.
-            
-            %TODO: Check for an error
-            
+                        
             obj.n_entities = file_info.EntityCount;
             obj.dt         = file_info.TimeSpan;
             obj.file_comment = file_info.FileComment;
@@ -73,6 +59,8 @@ classdef file < handle
             obj.file_datestr = datestr(obj.file_datenum);
             
             obj.entity_info = neuroshare.entity_info(obj.h,obj.n_entities);
+            
+            obj.analog_entities = obj.entity_info.getAnalogEntities();
             
             keyboard
             %JAH: At this point ...
