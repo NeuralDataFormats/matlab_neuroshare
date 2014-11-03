@@ -9,8 +9,10 @@ classdef analog_entity
     
     %}
     
-    properties
-        file_pointer
+    properties (Hidden)
+        file_pointer %This gets passed into any mex calls we make.
+        entity_id
+        file_path
     end
     
     properties
@@ -20,16 +22,26 @@ classdef analog_entity
         units
     end
     
+    properties
+        %There are additional properties in this 
+        raw_analog_info
+    end
+    
     methods
-        function obj = analog_entity(file_pointer,label,count,entity_id)
+        function obj = analog_entity(file_path,file_pointer,label,count,entity_id)
             %
             %   obj = neuroshare.analog_entity(file_pointer,label,count,entity_id)
             
-            obj.name = label;
+            obj.file_pointer = file_pointer;
+            
+            obj.name      = label;
             obj.n_samples = count;
-            keyboard
+            
+            obj.entity_id = entity_id;
             
             [result_code, nsAnalogInfo] = ns_GetAnalogInfo(file_pointer, entity_id);
+            
+            obj.raw_analog_info = nsAnalogInfo;
             
             neuroshare.handleError(result_code)
             
@@ -58,7 +70,23 @@ classdef analog_entity
             
         end
         function varargout = getData(obj,varargin)
-            %[ns_RESULT, ContCount, Data] = ns_GetAnalogData(hFile, EntityID, StartIndex, IndexCount);
+            %
+            %   Calling Forms:
+            %   --------------
+            %   data_object = getData(obj,varargin)
+            %
+            %   [raw_data,time] = getData(obj,varargin)
+            %   
+            %
+            %   Optional Inputs:
+            %   ----------------
+            %   return_object :
+            %   data_range :
+            %   time_range :
+            %   leave_raw : logical (default false)
+            %       If true, the data are not converted to double.
+            
+            
             
             
 
@@ -76,51 +104,44 @@ classdef analog_entity
                 in.data_range(2) = ceil(in.time_range(2)*obj.fs)+1;
             end
             
-            if any(in.data_range > obj.n_samples(record_id))
+            if any(in.data_range > obj.n_samples)
                 error('Data requested out of range')
             end
             
             if in.data_range(1) > in.data_range(2)
                 error('Specified data range must be increasing')
             end
+                        
+            %1 based indexing ...
+            %[ns_RESULT, ContCount, Data] = ns_GetAnalogData(hFile, EntityID, StartIndex, IndexCount);
+            n_samples_get = in.data_range(2) - in.data_range(1) + 1;
+            [result_code, ~, data] = ns_GetAnalogData(obj.file_pointer, obj.entity_id, in.data_range(1), n_samples_get);
             
+            if n_samples_get ~= length(data)
+                error('# of samples requested: %d, does equal the length of the returned data: %d',n_samples_get,length(data))
+            end
             
-            
-            data = obj.sdk.getChannelData(...
-                obj.file_h,...
-                record_id,...
-                obj.id,...
-                in.data_range(1),...
-                in.data_range(2)-in.data_range(1)+1,...
-                in.get_as_samples,...
-                'leave_raw',in.leave_raw);
-            
+            neuroshare.handleError(result_code)
+
             if isrow(data)
                 data = data';
             end
             
             if in.return_object
-                comments = obj.getRecordComments(record_id,'time_range',in.time_range);
                 
-                time_events = sci.time_series.time_events('comments',...
-                    [comments.time],'values',[comments.id],...
-                    'msgs',{comments.str});
-                
-                %TODO: This is not right if get_as_samples is false
                 time_object = sci.time_series.time(...
-                    obj.dt(record_id),...
+                    1/obj.fs,...
                     length(data),...
                     'sample_offset',in.data_range(1));
                 varargout{1} = sci.time_series.data(data,...
                     time_object,...
-                    'units',obj.units{record_id},...
+                    'units',obj.units,...
                     'channel_labels',obj.name,...
-                    'history',sprintf('File: %s\nRecord: %d',obj.file_path,record_id),...
-                    'events',time_events);
+                    'history',sprintf('File: %s',obj.file_path));
             else
                 varargout{1} = data;
                 if nargout == 2
-                    varargout{2} = (0:(length(data)-1)).*obj.dt(record_id);
+                    varargout{2} = (0:(length(data)-1)).*1/obj.fs;
                 end
             end
             

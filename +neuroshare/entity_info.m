@@ -9,8 +9,12 @@ classdef entity_info < handle
     %   NOTE: After looking at this, it seems like file might be better of
     %   loading the entity info and then creating the entities which it
     %   actually holds on to, rather than holding onto the entity info.
+    %
+    %   See Also:
+    %   neuroshare.file
     
     properties (Hidden)
+        file_path
        file_pointer 
     end
     
@@ -21,11 +25,13 @@ classdef entity_info < handle
     end
     
     methods
-        function obj = entity_info(file_pointer,n_entities)
+        function obj = entity_info(file_path,file_pointer,n_entities)
             
             %Does this work receiving multiple files at once????
             
             %????? Can we get multiple entities at once????
+            
+            obj.file_path = file_path;
             
             [result_code, entity_info] = ns_GetEntityInfo(file_pointer,1:n_entities);
             
@@ -37,9 +43,9 @@ classdef entity_info < handle
             obj.counts = [entity_info.ItemCount];
             
             obj.file_pointer = file_pointer;
-%     EntityLabel: 'CSC1'
-%      EntityType: 2
-%       ItemCount: 98572800
+            %     EntityLabel: 'CSC1'
+            %      EntityType: 2
+            %       ItemCount: 98572800
             
             
         end
@@ -56,7 +62,7 @@ classdef entity_info < handle
            temp_obj_ca = cell(1,n_analog);
            for iChan = 1:n_analog
                cur_I = I_analog(iChan);
-               temp_obj_ca{iChan} = neuroshare.analog_entity(...
+               temp_obj_ca{iChan} = neuroshare.analog_entity(obj.file_path,...
                    obj.file_pointer,obj.labels{cur_I},obj.counts(cur_I),cur_I);
            end
            

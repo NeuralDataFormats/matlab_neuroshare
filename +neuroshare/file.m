@@ -15,14 +15,20 @@ classdef file < handle
         file_datestr
         file_type
         file_duration % (seconds)
-        entity_info %Class: neuroshare.entity_info
+        entity_info     %neuroshare.entity_info
         analog_entities
+        neural_entities
+        event_entities
+        segment_entities
     end
     
     methods
         function obj = file(file_path)
             %
             %   neuroshare.file(file_path)
+            
+            %TODO: Can we use ns_GetLibraryInfo to get away from
+            %not needing to recompile code
             
             persistent p_file_extension
 
@@ -31,6 +37,8 @@ classdef file < handle
             if ~strcmp(file_extension,p_file_extension)
                neuroshare.autoLoadLibrary(file_path);
                p_file_extension = file_extension;
+            else
+               fprintf(2,'Not loading dll\n');
             end
             
             [result_code, obj.h] = ns_OpenFile(file_path);
@@ -58,17 +66,29 @@ classdef file < handle
                 file_info.Time_Sec + file_info.Time_MilliSec/1000);
             obj.file_datestr = datestr(obj.file_datenum);
             
-            obj.entity_info = neuroshare.entity_info(obj.h,obj.n_entities);
+            obj.entity_info = neuroshare.entity_info(file_path,obj.h,obj.n_entities);
             
-            obj.analog_entities = obj.entity_info.getAnalogEntities();
+            obj.analog_entities  = obj.entity_info.getAnalogEntities();
             
-            keyboard
-            %JAH: At this point ...
+            %TODO: JAH: At this point ...
+            %{
+            obj.neural_entities  = obj.entity_info.getNeuralEntities(); 
             
+            obj.event_entities   = obj.entity_info.getEventEntities();
+            
+            obj.segment_entities = obj.entity_info.getSegmentEntities();
+            %}
         end
         function delete(obj)
             try %#ok<TRYNC>
+                %fprintf(2,'Deleting handle\n');
                 ns_CloseFile(obj.h);
+                %fprintf(2,'Deleted file\n');
+                
+                %These were coming before the mlock on the mex was put in
+                %place
+                %Input arguments must be a double scalar.
+                %Call ns_SetLibrary first! Process interrupted!
             end
         end
     end
